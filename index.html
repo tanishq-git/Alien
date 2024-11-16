@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Space Invaders</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #000;
+            overflow: hidden;
+            flex-direction: column;
+            font-family: Arial, sans-serif;
+        }
+
+        .game-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #spaceInvadersCanvas {
+            background-color: #111;
+            border: 2px solid white;
+            display: block;
+            width: 100%;
+            height: auto;
+        }
+
+        /* Button Styles */
+        .button {
+            padding: 10px 20px;
+            background: linear-gradient(145deg, #ffcc00, #ff6600);
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease-in-out;
+        }
+
+        .button:hover {
+            background: linear-gradient(145deg, #ff6600, #ffcc00);
+            box-shadow: 4px 4px 16px rgba(0, 0, 0, 0.5);
+            transform: translateY(-4px);
+        }
+
+        .button:active {
+            transform: translateY(2px);
+            box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Control buttons container */
+        .control-buttons {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+            gap: 10px;
+            width: 100%;
+            flex-wrap: wrap;
+        }
+
+        #moveLeftBtn, #moveRightBtn, #moveDownBtn, #moveUpBtn {
+            width: 45%;
+        }
+
+        /* Shoot Button Styling */
+        #shootBtn {
+            margin-top: 20px;
+            width: 60%;
+            height: 50px;
+        }
+
+        /* Restart Button Styling */
+        #restartBtn {
+            position: absolute;
+            margin-top: 400px;
+            /*bottom: 0;*/
+            /*top: 50%;*/
+            /*left: 50%;*/
+            /*transform: translate(-50%, -50%);*/
+            padding: 20px 40px;
+            background: linear-gradient(145deg, #ff6600, #ffcc00);
+            border: none;
+            border-radius: 15px;
+            font-size: 20px;
+            color: white;
+            cursor: pointer;
+            display: none;
+            box-shadow: 4px 4px 12px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease-in-out;
+        }
+
+        #restartBtn:hover {
+            background: linear-gradient(145deg, #ffcc00, #ff6600);
+            box-shadow: 6px 6px 20px rgba(0, 0, 0, 0.4);
+            transform: translateY(-4px);
+        }
+
+        #restartBtn:active {
+            transform: translateY(2px);
+            box-shadow: 4px 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .button {
+                font-size: 14px;
+                padding: 8px 16px;
+            }
+
+            #shootBtn {
+                width: 80%;
+                height: 45px;
+            }
+
+            #moveLeftBtn, #moveRightBtn, #moveDownBtn, #moveUpBtn {
+                width: 40%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            #shootBtn {
+                width: 70%;
+                height: 40px;
+            }
+
+            #moveLeftBtn, #moveRightBtn, #moveDownBtn, #moveUpBtn {
+                width: 45%;
+            }
+
+            .game-container {
+                flex-direction: column;
+            }
+
+            #restartBtn {
+                font-size: 18px;
+                padding: 18px 35px;
+            }
+            
+        }
+        .tanishq{
+            color:white;
+            margin-top:100px;
+            font-size: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="game-container">
+        <canvas id="spaceInvadersCanvas"></canvas>
+        <button id="shootBtn" class="button">Shoot</button>
+        <div class="control-buttons">
+            <button id="moveLeftBtn" class="button">Move Left</button>
+            <button id="moveRightBtn" class="button">Move Right</button>
+            <button id="moveDownBtn" class="button">Move Down</button>
+            <button id="moveUpBtn" class="button">Move Up</button>  <!-- Move Up Button -->
+
+        </div>
+        <button id="restartBtn" class="button">Restart</button>
+        <h1 class="tanishq">TANISHQ</h1>
+    </div>
+
+    <script>
+        // Set up the canvas
+        const canvas = document.getElementById('spaceInvadersCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Game variables
+        let spaceshipWidth = 50;
+        let spaceshipHeight = 30;
+        let spaceshipX = canvas.width / 2 - spaceshipWidth / 2;
+        let spaceshipY = canvas.height - spaceshipHeight - 10;  // Move spaceship to bottom of the screen
+        let spaceshipSpeed = 50;
+        let lasers = [];
+        let aliens = [];
+        let alienWidth = 40;
+        let alienHeight = 40;
+        let alienSpeedY = 1; // Initial speed of aliens
+        let score = 0;
+        let gameOver = false;
+        let elapsedTime = 0; // Track the elapsed time for speed increase
+        let stars = [];
+        let gameLoopId;
+
+        // Restart button
+        const restartBtn = document.getElementById('restartBtn');
+        const shootBtn = document.getElementById('shootBtn');
+        const moveLeftBtn = document.getElementById('moveLeftBtn');
+        const moveRightBtn = document.getElementById('moveRightBtn');
+        const moveDownBtn = document.getElementById('moveDownBtn');
+        const moveUpBtn = document.getElementById('moveUpBtn');  // Move Up Button
+
+        // Listen for buttons to move the spaceship or shoot lasers
+        moveLeftBtn.addEventListener('click', () => moveSpaceship('left'));
+        moveRightBtn.addEventListener('click', () => moveSpaceship('right'));
+        moveDownBtn.addEventListener('click', () => moveSpaceship('down'));  // Move down button
+        moveUpBtn.addEventListener('click', () => moveSpaceship('up'));      // Move up button
+        shootBtn.addEventListener('click', shootLaser);
+
+        // Move the spaceship
+        function moveSpaceship(direction) {
+            if (gameOver) return;
+
+            if (direction === 'left' && spaceshipX > 0) {
+                spaceshipX -= spaceshipSpeed;
+            } else if (direction === 'right' && spaceshipX + spaceshipWidth < canvas.width) {
+                spaceshipX += spaceshipSpeed;
+            } else if (direction === 'down' && spaceshipY + spaceshipHeight < canvas.height) {  // Move down
+                spaceshipY += spaceshipSpeed;
+            } else if (direction === 'up' && spaceshipY > 0) {  // Move up
+                spaceshipY -= spaceshipSpeed;
+            }
+        }
+
+        // Shoot 3 lasers at once, all going upwards but with slight horizontal spread
+        function shootLaser() {
+            if (gameOver) return;
+
+            lasers.push({
+                x: spaceshipX + spaceshipWidth / 2 - 20,  // Left laser
+                y: spaceshipY,
+                width: 10,
+                height: 20,
+                speed: 5
+            });
+            lasers.push({
+                x: spaceshipX + spaceshipWidth / 2 - 5,   // Middle laser
+                y: spaceshipY,
+                width: 10,
+                height: 20,
+                speed: 5
+            });
+            lasers.push({
+                x: spaceshipX + spaceshipWidth / 2 + 10,  // Right laser
+                y: spaceshipY,
+                width: 10,
+                height: 20,
+                speed: 5
+            });
+        }
+
+        // Create fewer aliens over time, and increase speed
+        function createAliens() {
+            for (let i = 0; i < 5; i++) {
+                aliens.push({
+                    x: Math.random() * (canvas.width - alienWidth),
+                    y: Math.random() * -200,  // Start from top, outside the screen
+                    width: alienWidth,
+                    height: alienHeight
+                });
+            }
+        }
+
+        // Draw the spaceship
+        function drawSpaceship() {
+            ctx.fillStyle = 'blue';
+            ctx.fillRect(spaceshipX, spaceshipY, spaceshipWidth, spaceshipHeight);
+        }
+
+        // Draw lasers
+        function drawLasers() {
+            ctx.fillStyle = 'red';
+            for (let i = 0; i < lasers.length; i++) {
+                ctx.fillRect(lasers[i].x, lasers[i].y, lasers[i].width, lasers[i].height);
+                lasers[i].y -= lasers[i].speed;  // Move the laser upwards
+
+                // Remove lasers when they go off screen
+                if (lasers[i].y < 0) {
+                    lasers.splice(i, 1);
+                    i--;
+                }
+            }
+        }
+
+        // Draw the aliens
+        function drawAliens() {
+            ctx.fillStyle = 'green';
+            for (let i = 0; i < aliens.length; i++) {
+                ctx.fillRect(aliens[i].x, aliens[i].y, aliens[i].width, aliens[i].height);
+            }
+        }
+
+        // Move the aliens and increase speed gradually
+        function moveAliens() {
+            elapsedTime += 1; // Increase time elapsed each frame
+
+            // Gradually increase alien speed every 1000 frames (about 1 second)
+            if (elapsedTime % 1000 === 0) {
+                alienSpeedY += 2;  // Increase alien speed
+            }
+
+            for (let i = 0; i < aliens.length; i++) {
+                aliens[i].y += alienSpeedY;
+
+                // If an alien goes off-screen, reset it to the top with a random position
+                if (aliens[i].y > canvas.height) {
+                    aliens[i].y = -alienHeight; // Reset to the top
+                    aliens[i].x = Math.random() * (canvas.width - alienWidth);  // Random X position
+                }
+            }
+        }
+
+        // Check for collision between spaceship and aliens
+        function checkSpaceshipAlienCollision() {
+            for (let i = 0; i < aliens.length; i++) {
+                if (spaceshipX + spaceshipWidth > aliens[i].x &&
+                    spaceshipX < aliens[i].x + alienWidth &&
+                    spaceshipY + spaceshipHeight > aliens[i].y &&
+                    spaceshipY < aliens[i].y + alienHeight) {
+                    // Collision detected, game over
+                    gameOver = true;
+                    break;
+                }
+            }
+        }
+
+        // Check for laser and alien collisions
+        function checkLaserAlienCollision() {
+            for (let i = 0; i < lasers.length; i++) {
+                for (let j = 0; j < aliens.length; j++) {
+                    if (lasers[i].x + lasers[i].width >= aliens[j].x &&
+                        lasers[i].x <= aliens[j].x + alienWidth &&
+                        lasers[i].y <= aliens[j].y + alienHeight &&
+                        lasers[i].y + lasers[i].height >= aliens[j].y) {
+                        
+                        lasers.splice(i, 1);
+                        aliens.splice(j, 1);
+                        score += 10;
+                        i--;
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Draw the score
+        function drawScore() {
+            ctx.fillStyle = 'white';
+            ctx.font = '20px Arial';
+            ctx.fillText('Score: ' + score, 10, 30);
+        }
+
+        // Draw game over screen
+        function drawGameOver() {
+            ctx.fillStyle = 'white';
+            ctx.font = '30px Arial';
+            ctx.fillText('GAME OVER', canvas.width / 2 - 90, canvas.height / 2 - 30);
+            ctx.fillText('Score: ' + score, canvas.width / 2 - 50, canvas.height / 2 + 10);
+            restartBtn.style.display = 'block';
+        }
+
+        // Reset the game state
+        function restartGame() {
+            spaceshipX = canvas.width / 2 - spaceshipWidth / 2;
+            spaceshipY = canvas.height - spaceshipHeight - 10;  // Reset to bottom
+            lasers = [];
+            score = 0;
+            gameOver = false;
+            aliens = [];
+            alienSpeedY = 1; // Reset alien speed
+            elapsedTime = 0; // Reset elapsed time
+            createAliens();
+            restartBtn.style.display = 'none';
+            cancelAnimationFrame(gameLoopId); // Stop the current animation frame
+            gameLoop();
+        }
+
+        // Add event listener to restart button
+        restartBtn.addEventListener('click', restartGame);
+
+        // Generate stars for the background
+        function generateStars() {
+            stars = [];
+            for (let i = 0; i < 100; i++) {
+                stars.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    radius: Math.random() * 2,
+                    speed: Math.random() * 0.5 + 0.5
+                });
+            }
+        }
+
+        // Draw the stars (moving background effect)
+        function drawStars() {
+            ctx.fillStyle = 'white';
+            for (let i = 0; i < stars.length; i++) {
+                ctx.beginPath();
+                ctx.arc(stars[i].x, stars[i].y, stars[i].radius, 0, Math.PI * 2);
+                ctx.fill();
+                
+                stars[i].y += stars[i].speed;
+                
+                if (stars[i].y > canvas.height) {
+                    stars[i].y = -stars[i].radius;
+                    stars[i].x = Math.random() * canvas.width;
+                }
+            }
+        }
+
+        // Game loop
+        function gameLoop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            if (!gameOver) {
+                drawStars();
+                drawSpaceship();
+                drawLasers();
+                drawAliens();
+                moveAliens();
+                checkLaserAlienCollision();
+                checkSpaceshipAlienCollision(); // Check if spaceship touches alien
+                drawScore();
+                gameLoopId = requestAnimationFrame(gameLoop);
+            } else {
+                drawGameOver();
+            }
+        }
+
+        // Initialize the game
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight * 0.6;  // Set canvas height relative to window height
+        });
+
+        generateStars();
+        createAliens();
+        gameLoop();
+    </script>
+</body>
+</html>
